@@ -4,13 +4,13 @@ import { Solar } from "lunar-typescript";
 import { z } from "zod";
 
 
-// Zod schema for input validation
-const createChartInputSchema = z.object({
-  name: z.string(),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  birthTime: z.string().regex(/^\d{2}:\d{2}$/),
-  timeZone: z.string(),
-  gender: z.enum(["male", "female"]),
+// Updated Zod schema: accept a single ISO 8601 datetime string for birthDate
+// and use numeric gender (1 = male, 2 = female) to align with EightChar.getYun API.
+const chartInputSchema = z.object({
+  chartName: z.string().min(1),
+  birthDate: z.string().datetime({ message: "請提供有效的 ISO 8601 日期時間字串" }),
+  gender: z.number().min(1).max(2),
+  timeZone: z.string().optional(),
 });
 
 interface CreateChartData {
@@ -82,18 +82,29 @@ const createChartLogic = async (data: CreateChartData): Promise<ChartData> => {
 
 // Main callable function: accepts user-friendly input, validates, and maps to calculation logic
 export const createChart = functions.region("asia-east1").https.onCall(async (data, context) => {
-  // Validate input
-  const parseResult = createChartInputSchema.safeParse(data);
+  // Validate input against the updated schema
+  const parseResult = chartInputSchema.safeParse(data);
   if (!parseResult.success) {
     throw new functions.https.HttpsError('invalid-argument', 'Invalid input', parseResult.error.flatten());
   }
 
-  const { birthDate, birthTime, gender } = parseResult.data;
-  // Parse date and time
-  const [year, month, day] = birthDate.split('-').map(Number);
-  const [hour, minute] = birthTime.split(':').map(Number);
-  // Map gender to Chinese for calculation logic if needed
-  const genderZh = gender === 'male' ? '男' : '女';
+  const { birthDate, gender } = parseResult.data;
+
+  // Construct Date from ISO 8601 string (e.g., 2000-01-15T14:30:00+08:00)
+  const date = new Date(birthDate);
+  if (isNaN(date.getTime())) {
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid birthDate ISO string');
+  }
+
+  // Decompose to Y/M/D H:M in local time from the ISO string
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // JS months are 0-based
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+
+  // Map numeric gender to Chinese character if downstream logic needs it
+  const genderZh = gender === 1 ? '男' : '女';
 
   const chartData = await createChartLogic({ year, month, day, hour, minute, gender: genderZh });
   return chartData;

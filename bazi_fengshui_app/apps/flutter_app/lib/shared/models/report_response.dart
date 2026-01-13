@@ -101,6 +101,7 @@ class ReportDataJsonConverter implements JsonConverter<ReportData, Map<String, d
 // === 元數據與完整回應模型 ===
 @freezed
 class ReportMetadata with _$ReportMetadata {
+  @JsonSerializable(fieldRename: FieldRename.none)
   const factory ReportMetadata({
     required String source,
     required String promptVersion,
@@ -114,6 +115,7 @@ class ReportMetadata with _$ReportMetadata {
 
 @freezed
 class FunctionResponse with _$FunctionResponse {
+  @JsonSerializable(fieldRename: FieldRename.none)
   const factory FunctionResponse({
     @ReportDataJsonConverter() required ReportData report,
     required ReportMetadata metadata,
