@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import zodToJsonSchema from 'zod-to-json-schema';
 
 // 函式輸入驗證
 export const ReportRequestSchema = z.object({
