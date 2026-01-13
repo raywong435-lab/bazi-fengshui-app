@@ -5,7 +5,7 @@
   },
   "functions": [
     {
-      "source": "bazi_fengshui_app/firebase/functions",
+      "source": "bazi_fengshui_app/apps/firebase_functions",
       "codebase": "default",
       "ignore": [
         "node_modules",
