@@ -50,8 +50,17 @@ export const ReportDataSchema = z.discriminatedUnion('reportType', [
 ]);
 export type ReportData = z.infer<typeof ReportDataSchema>;
 
-// 將 Zod Schema 轉換為 JSON Schema 供 AI 使用
-export const reportJsonSchema = zodToJsonSchema(ReportDataSchema as any, { $refStrategy: 'none' });
+// Manual JSON schema for AI prompts (removed zod-to-json-schema dependency)
+export const reportJsonSchema = {
+  type: 'object',
+  required: ['reportType'],
+  properties: {
+    reportType: { type: 'string', enum: ['career', 'wealth', 'health', 'relationship'] },
+    title: { type: 'string' },
+    // Add more properties as needed based on reportType
+  },
+  description: 'Report data with discriminated union based on reportType',
+};
 
 // === 最終回傳給前端的完整結構 ===
 export const FunctionResponseSchema = z.object({

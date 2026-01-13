@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FunctionResponseSchema = exports.reportJsonSchema = exports.ReportDataSchema = exports.ReportRequestSchema = void 0;
 const zod_1 = require("zod");
-const zod_to_json_schema_1 = require("zod-to-json-schema");
 // 函式輸入驗證
 exports.ReportRequestSchema = zod_1.z.object({
     chartId: zod_1.z.string().min(1),
@@ -46,8 +45,17 @@ exports.ReportDataSchema = zod_1.z.discriminatedUnion('reportType', [
     HealthReportSchema,
     RelationshipReportSchema,
 ]);
-// 將 Zod Schema 轉換為 JSON Schema 供 AI 使用
-exports.reportJsonSchema = (0, zod_to_json_schema_1.default)(exports.ReportDataSchema, { $refStrategy: 'none' });
+// Manual JSON schema for AI prompts (removed zod-to-json-schema dependency)
+exports.reportJsonSchema = {
+    type: 'object',
+    required: ['reportType'],
+    properties: {
+        reportType: { type: 'string', enum: ['career', 'wealth', 'health', 'relationship'] },
+        title: { type: 'string' },
+        // Add more properties as needed based on reportType
+    },
+    description: 'Report data with discriminated union based on reportType',
+};
 // === 最終回傳給前端的完整結構 ===
 exports.FunctionResponseSchema = zod_1.z.object({
     report: exports.ReportDataSchema,

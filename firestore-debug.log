@@ -7,7 +7,7 @@ WARNING: java.lang.System::loadLibrary has been called by io.netty.util.internal
 WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
 WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 
-Jan 13, 2026 11:49:29 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+Jan 13, 2026 11:52:30 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
 INFO: Started WebSocket server on ws://127.0.0.1:9150
 API endpoint: http://127.0.0.1:8080
 If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
