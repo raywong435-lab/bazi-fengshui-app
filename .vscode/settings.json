@@ -1,0 +1,13 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "npx tsc": true,
+        "/^xcopy /E /I /Y c:\\\\Users\\\\raywo\\\\AIBaZi\\\\flutter_app\\\\\\* c:\\\\Users\\\\raywo\\\\bazi_fengshui_app\\\\packages\\\\app\\\\$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^xcopy /E /I /Y c:\\\\Users\\\\raywo\\\\AIBaZi\\\\functions\\\\\\* c:\\\\Users\\\\raywo\\\\bazi_fengshui_app\\\\packages\\\\functions\\\\$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

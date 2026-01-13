@@ -1,0 +1,39 @@
+{
+  "name": "functions",
+  "description": "Cloud Functions for AIBaZi",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "npm run clean && tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:config:get > .runtimeconfig.json && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "clean": "rimraf lib"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@google/generative-ai": "0.2.1",
+    "bazi-calculator-by-alvamind": "1.0.2",
+    "firebase-admin": "^11.8.0",
+    "firebase-functions": "^4.3.1",
+    "lunar-typescript": "1.8.6",
+    "mystilight-8char": "1.0.0",
+    "zod": "3.25.76",
+    "zod-to-json-schema": "3.25.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.0.0",
+    "firebase-functions-test": "^3.1.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.0.0",
+    "rimraf": "^5.0.5"
+  },
+  "private": true
+}
