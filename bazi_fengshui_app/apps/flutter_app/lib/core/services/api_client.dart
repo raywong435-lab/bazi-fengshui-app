@@ -1,6 +1,5 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../features/charts/data/models/chart_model.dart';
-import '../../features/reports/data/models/report_model.dart';
 
 /// API client for Firebase Cloud Functions
 class ApiClient {
@@ -29,14 +28,18 @@ class ApiClient {
   }
 
   /// Generate a report for a chart
-  Future<FullReport> generateReport(String chartId) async {
+  Future<Map<String, dynamic>> generateReport({
+    required String chartId,
+    required String reportType,
+  }) async {
     try {
       final callable = _functions.httpsCallable('generateReport');
       final result = await callable.call<Map<String, dynamic>>({
         'chartId': chartId,
+        'reportType': reportType,
       });
 
-      return FullReport.fromJson(result.data);
+      return result.data;
     } on FirebaseFunctionsException catch (e) {
       throw _handleFunctionsError(e);
     } catch (e) {

@@ -1,26 +1,36 @@
 "use strict";
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateFullReport = exports.generateContent = void 0;
 exports.generateAndValidateJson = generateAndValidateJson;
-exports.buildBaziReportPrompt = buildBaziReportPrompt;
 exports.createPrompt = createPrompt;
 exports.generateReportWithGemini = generateReportWithGemini;
-const functions = require("firebase-functions");
+const params_1 = require("firebase-functions/params");
 const generative_ai_1 = require("@google/generative-ai");
 const errors_1 = require("../types/errors");
 // Resolve API key in this priority order:
-// 1) functions config (`firebase functions:config:set gemini.key="..."`) — works with emulator
-// 2) environment variable `GEMINI_API_KEY`
-// 3) fall back to legacy `GENAI_KEY` env var
-const functionsConfigKey = (_a = (functions && functions.config && functions.config().gemini)) === null || _a === void 0 ? void 0 : _a.key;
-const API_KEY = functionsConfigKey || process.env.GEMINI_API_KEY || process.env.GENAI_KEY || '';
-if (!API_KEY) {
-    console.warn('Warning: Gemini API key not found in functions config or GEMINI_API_KEY/GENAI_KEY env vars.');
+// 1) Environment parameter (runtime): `GEMINI_API_KEY` from Firebase Secrets
+// 2) Environment variable `GEMINI_API_KEY`
+// 3) Legacy env var `GENAI_KEY`
+// NOTE: We do NOT call .value() at module load time (deploy-time) to avoid
+// triggering params evaluation during deployment. Instead, resolve lazily at runtime.
+const GEMINI_KEY_PARAM = (0, params_1.defineString)('GEMINI_API_KEY');
+function getApiKey() {
+    // Resolve in priority order: param -> env var -> legacy env var
+    const apiKeyFromParam = GEMINI_KEY_PARAM.value();
+    const API_KEY = apiKeyFromParam || process.env.GEMINI_API_KEY || process.env.GENAI_KEY || '';
+    if (!API_KEY) {
+        console.warn('Warning: Gemini API key not found in Firebase Secrets, GEMINI_API_KEY, or GENAI_KEY env vars.');
+    }
+    return API_KEY;
 }
-const genAI = new generative_ai_1.GoogleGenerativeAI(API_KEY);
-const generativeModel = genAI.getGenerativeModel({ model: 'gemini-pro' });
+function getGenerativeModel() {
+    const API_KEY = getApiKey();
+    const genAI = new generative_ai_1.GoogleGenerativeAI(API_KEY);
+    return genAI.getGenerativeModel({ model: 'gemini-pro' });
+}
 async function generateAndValidateJson(prompt, schema) {
     const generationConfig = {};
+    const generativeModel = getGenerativeModel();
     try {
         const result = await generativeModel.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -57,32 +67,6 @@ async function generateAndValidateJson(prompt, schema) {
  * Note: We use array.join() instead of template literals with triple-backticks
  * to avoid TypeScript compiler issues with code fence markers in strings.
  */
-function buildBaziReportPrompt(birthData, chartData) {
-    const schemaDescription = 'JSON object with: analysis (string), insights (array of strings), recommendations (array of strings)';
-    const lines = [
-        '你是一個專業的八字命理分析師。',
-        '',
-        '根據以下出生數據和八字圖表，生成詳細的命理報告。',
-        '',
-        '出生數據:',
-        `年: ${birthData.year}, 月: ${birthData.month}, 日: ${birthData.day}, 時: ${birthData.hour}`,
-        '',
-        '八字圖表:',
-        JSON.stringify(chartData, null, 2),
-        '',
-        '請以下列JSON格式返回分析結果:',
-        '```json',
-        '{',
-        '  "analysis": "string",',
-        '  "insights": ["string"],',
-        '  "recommendations": ["string"]',
-        '}',
-        '```',
-        '',
-        '確保返回的JSON可以被正確解析。',
-    ];
-    return lines.join('\n');
-}
 // Use a small, manually authored simplified JSON schema for guiding the model when zod->json-schema
 // conversion is too deep/complex. Final validation is still done with the Zod schema.
 function createPrompt(baziData, reportType, simplifiedSchema) {
@@ -134,4 +118,33 @@ async function generateReportWithGemini(chartData, reportType) {
     const validated = await generateAndValidateJson(prompt + '\n\n' + JSON.stringify(simplifiedForPrompt), ReportDataSchema);
     return validated;
 }
+/**
+ * Simple wrapper for Gemini content generation.
+ * Called by generateReportWithGemini and other functions.
+ */
+const generateContent = async (prompt) => {
+    const model = getGenerativeModel();
+    const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+    });
+    const response = result.response;
+    return response.text();
+};
+exports.generateContent = generateContent;
+/**
+ * Generate full structured report from Bazi data.
+ * Returns parsed JSON response.
+ */
+const generateFullReport = async (baziData) => {
+    const prompt = `基于以下八字命盘数据，生成一份结构化的完整报告（JSON only）。八字数据: ${JSON.stringify(baziData)}`;
+    const text = await (0, exports.generateContent)(prompt);
+    try {
+        const parsed = JSON.parse(text);
+        return parsed;
+    }
+    catch (error) {
+        throw new Error('Failed to parse Gemini response as JSON');
+    }
+};
+exports.generateFullReport = generateFullReport;
 //# sourceMappingURL=gemini.js.map

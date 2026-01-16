@@ -8,9 +8,8 @@ part 'report_model.g.dart';
 class OriginalChartAnalysis with _$OriginalChartAnalysis {
   @JsonSerializable(fieldRename: FieldRename.none)
   const factory OriginalChartAnalysis({
-    required String strengthAnalysis,
-    required KeyGods keyGods,
-    required String shenSha,
+    required String title,
+    required String content,
   }) = _OriginalChartAnalysis;
 
   factory OriginalChartAnalysis.fromJson(Map<String, dynamic> json) =>
@@ -22,10 +21,9 @@ class OriginalChartAnalysis with _$OriginalChartAnalysis {
 class KeyGods with _$KeyGods {
   @JsonSerializable(fieldRename: FieldRename.none)
   const factory KeyGods({
-    required String fuyi,
-    required String tongguan,
-    required String bingyao,
-    required String tiaohou,
+    required String title,
+    required List<String> favorable,
+    required List<String> unfavorable,
   }) = _KeyGods;
 
   factory KeyGods.fromJson(Map<String, dynamic> json) =>
@@ -37,8 +35,9 @@ class KeyGods with _$KeyGods {
 class AnnualFortune2026 with _$AnnualFortune2026 {
   @JsonSerializable(fieldRename: FieldRename.none)
   const factory AnnualFortune2026({
-    required String career,
     required String wealth,
+    required String career,
+    required String love,
     required String health,
   }) = _AnnualFortune2026;
 
@@ -52,6 +51,7 @@ class FullReport with _$FullReport {
   @JsonSerializable(fieldRename: FieldRename.none)
   const factory FullReport({
     required OriginalChartAnalysis originalChartAnalysis,
+    required KeyGods keyGods,
     required AnnualFortune2026 annualFortune2026,
   }) = _FullReport;
 

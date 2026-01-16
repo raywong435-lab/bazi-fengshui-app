@@ -1,17 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateReport = void 0;
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+const functions = require("firebase-functions/v1");
 const zod_1 = require("zod");
-const geminiClient_1 = require("../services/geminiClient");
+const gemini_1 = require("../services/gemini");
 const reportSchemas_1 = require("../types/reportSchemas");
-const db = admin.firestore();
+const firebase_1 = require("../config/firebase");
 const PROMPT_VERSION = 'report-v1.0';
 const inputSchema = zod_1.z.object({
     chartId: zod_1.z.string().min(1),
     reportType: zod_1.z.enum(['career', 'wealth', 'health', 'relationship']),
 });
+/**
+ * Generates an AI-powered Bazi report for a chart.
+ * Checks user quota, caches result, and validates against schema.
+ *
+ * @param {object} data - Input data
+ * @param {string} data.chartId - ID of previously created chart
+ * @param {string} data.reportType - One of 'career', 'wealth', 'health', 'relationship'
+ * @returns {Promise<object>} { report: ReportData, metadata: { source, promptVersion, deployTag, generatedAt } }
+ * @throws {HttpsError} 'unauthenticated' if not logged in
+ * @throws {HttpsError} 'invalid-argument' if input fails schema validation
+ * @throws {HttpsError} 'not-found' if chart not found
+ * @throws {HttpsError} 'resource-exhausted' if monthly report quota exceeded
+ * @throws {HttpsError} 'internal' if Gemini API call fails
+ */
 // generateReport callable: fetch chart by ID, check cache/quota, generate and cache report
 exports.generateReport = functions.region('asia-east1').https.onCall(async (data, context) => {
     var _a;
@@ -24,6 +37,7 @@ exports.generateReport = functions.region('asia-east1').https.onCall(async (data
         throw new functions.https.HttpsError('invalid-argument', 'Invalid input', parsed.error.flatten());
     }
     const { chartId, reportType } = parsed.data;
+    const db = (0, firebase_1.getDb)();
     const cacheId = `${chartId}_${reportType}`;
     const cacheRef = db.collection('users').doc(uid).collection('reports').doc(cacheId);
     const cacheDoc = await cacheRef.get();
@@ -48,11 +62,11 @@ exports.generateReport = functions.region('asia-east1').https.onCall(async (data
         }
         const MONTHLY_LIMIT = 10;
         if (quotaCount >= MONTHLY_LIMIT) {
-            throw new functions.https.HttpsError('permission-denied', `Monthly report limit (${MONTHLY_LIMIT}) reached.`);
+            throw new functions.https.HttpsError('resource-exhausted', `Monthly report limit (${MONTHLY_LIMIT}) reached.`);
         }
         tx.set(entRef, {
-            quotaCount: admin.firestore.FieldValue.increment(1),
-            quotaLastReset: admin.firestore.Timestamp.fromDate(now),
+            quotaCount: firebase_1.admin.firestore.FieldValue.increment(1),
+            quotaLastReset: firebase_1.admin.firestore.Timestamp.fromDate(now),
         }, { merge: true });
     });
     // Fetch chart document
@@ -66,7 +80,7 @@ exports.generateReport = functions.region('asia-east1').https.onCall(async (data
     let reportBody;
     try {
         if (reportType === 'career' || reportType === 'wealth' || reportType === 'health') {
-            const full = await (0, geminiClient_1.generateFullReport)(chartData);
+            const full = await (0, gemini_1.generateFullReport)(chartData);
             // Map reportType to fields in FullReport if present
             if (full.annualFortune2026) {
                 if (reportType === 'career')
@@ -84,13 +98,17 @@ exports.generateReport = functions.region('asia-east1').https.onCall(async (data
         }
         else if (reportType === 'relationship') {
             const prompt = `基于以下八字命盘数据，生成一份详细的人际关系分析报告。请分析此人的性格特点、人际交往模式、适合的伴侣类型、潜在的感情挑战以及改善人际关系的建议。命盘数据: ${JSON.stringify(chartData)}`;
-            const text = await (0, geminiClient_1.generateContent)(prompt);
+            const text = await (0, gemini_1.generateContent)(prompt);
             reportBody = { content: text };
         }
     }
     catch (err) {
-        console.error('Report generation failed', err);
-        throw new functions.https.HttpsError('internal', 'Report generation failed');
+        if (err instanceof functions.https.HttpsError) {
+            // Re-throw existing HttpsError (e.g., from Gemini validation)
+            throw err;
+        }
+        console.error('Report generation failed with unknown error:', (err === null || err === void 0 ? void 0 : err.message) || err);
+        throw new functions.https.HttpsError('internal', 'Failed to generate report. Please try again.');
     }
     const metadata = {
         promptVersion: PROMPT_VERSION,

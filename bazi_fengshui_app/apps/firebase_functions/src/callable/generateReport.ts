@@ -1,10 +1,8 @@
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions/v1';
 import { z } from 'zod';
-import { generateContent, generateFullReport } from '../services/geminiClient';
+import { generateContent, generateFullReport } from '../services/gemini';
 import { ReportRequestSchema, ReportDataSchema, FunctionResponseSchema, reportJsonSchema } from '../types/reportSchemas';
-
-const db = admin.firestore();
+import { getDb, admin } from '../config/firebase';
 const PROMPT_VERSION = 'report-v1.0';
 
 const inputSchema = z.object({
@@ -12,6 +10,20 @@ const inputSchema = z.object({
   reportType: z.enum(['career', 'wealth', 'health', 'relationship']),
 });
 
+/**
+ * Generates an AI-powered Bazi report for a chart.
+ * Checks user quota, caches result, and validates against schema.
+ *
+ * @param {object} data - Input data
+ * @param {string} data.chartId - ID of previously created chart
+ * @param {string} data.reportType - One of 'career', 'wealth', 'health', 'relationship'
+ * @returns {Promise<object>} { report: ReportData, metadata: { source, promptVersion, deployTag, generatedAt } }
+ * @throws {HttpsError} 'unauthenticated' if not logged in
+ * @throws {HttpsError} 'invalid-argument' if input fails schema validation
+ * @throws {HttpsError} 'not-found' if chart not found
+ * @throws {HttpsError} 'resource-exhausted' if monthly report quota exceeded
+ * @throws {HttpsError} 'internal' if Gemini API call fails
+ */
 // generateReport callable: fetch chart by ID, check cache/quota, generate and cache report
 export const generateReport = functions.region('asia-east1').https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -25,6 +37,7 @@ export const generateReport = functions.region('asia-east1').https.onCall(async 
   }
 
   const { chartId, reportType } = parsed.data;
+  const db = getDb();
 
   const cacheId = `${chartId}_${reportType}`;
   const cacheRef = db.collection('users').doc(uid).collection('reports').doc(cacheId);
@@ -54,7 +67,7 @@ export const generateReport = functions.region('asia-east1').https.onCall(async 
 
     const MONTHLY_LIMIT = 10;
     if (quotaCount >= MONTHLY_LIMIT) {
-      throw new functions.https.HttpsError('permission-denied', `Monthly report limit (${MONTHLY_LIMIT}) reached.`);
+      throw new functions.https.HttpsError('resource-exhausted', `Monthly report limit (${MONTHLY_LIMIT}) reached.`);
     }
 
     tx.set(entRef, {
@@ -91,9 +104,13 @@ export const generateReport = functions.region('asia-east1').https.onCall(async 
       const text = await generateContent(prompt);
       reportBody = { content: text };
     }
-  } catch (err) {
-    console.error('Report generation failed', err);
-    throw new functions.https.HttpsError('internal', 'Report generation failed');
+  } catch (err: any) {
+    if (err instanceof functions.https.HttpsError) {
+      // Re-throw existing HttpsError (e.g., from Gemini validation)
+      throw err;
+    }
+    console.error('Report generation failed with unknown error:', err?.message || err);
+    throw new functions.https.HttpsError('internal', 'Failed to generate report. Please try again.');
   }
 
   const metadata = {

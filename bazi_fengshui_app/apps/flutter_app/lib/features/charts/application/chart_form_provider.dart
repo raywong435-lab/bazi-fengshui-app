@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 // import 'package:app/features/charts/application/chart_list_provider.dart';
 
 part 'chart_form_provider.freezed.dart';
+part 'chart_form_provider.g.dart';
 
 @freezed
 class ChartFormData with _$ChartFormData {

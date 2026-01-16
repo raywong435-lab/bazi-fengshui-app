@@ -6,7 +6,6 @@ part 'chart_model.g.dart';
 /// Pillar data containing Heavenly Stem and Earthly Branch
 @freezed
 class PillarData with _$PillarData {
-  @JsonSerializable(fieldRename: FieldRename.none)
   const factory PillarData({
     required String heavenlyStem,
     required String earthlyBranch,
@@ -19,7 +18,6 @@ class PillarData with _$PillarData {
 /// Complete chart data with Four Pillars (年月日時)
 @freezed
 class ChartData with _$ChartData {
-  @JsonSerializable(fieldRename: FieldRename.none)
   const factory ChartData({
     required PillarData year,
     required PillarData month,
@@ -34,7 +32,6 @@ class ChartData with _$ChartData {
 /// Chart creation request
 @freezed
 class ChartRequest with _$ChartRequest {
-  @JsonSerializable(fieldRename: FieldRename.none)
   const factory ChartRequest({
     required String chartName,
     required String birthDate, // ISO 8601 datetime string
@@ -44,4 +41,18 @@ class ChartRequest with _$ChartRequest {
 
   factory ChartRequest.fromJson(Map<String, dynamic> json) =>
       _$ChartRequestFromJson(json);
+}
+
+/// Lightweight chart summary for list views
+@freezed
+class Chart with _$Chart {
+  const factory Chart({
+    required String id,
+    required String name,
+    required DateTime createdAt,
+    String? timeZone,
+    int? gender,
+  }) = _Chart;
+
+  factory Chart.fromJson(Map<String, dynamic> json) => _$ChartFromJson(json);
 }

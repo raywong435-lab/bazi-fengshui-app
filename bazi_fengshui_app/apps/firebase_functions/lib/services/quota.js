@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkAndDecrementQuota = checkAndDecrementQuota;
+/**
+ * @deprecated Use /users/{userId}/entitlements/monthly instead.
+ * This module is kept for backward compatibility but should not be used in new code.
+ * See generateReport.ts for the canonical quota implementation.
+ */
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const MONTHLY_QUOTA_LIMIT = 5; // 每月 AI 報告的免費額度

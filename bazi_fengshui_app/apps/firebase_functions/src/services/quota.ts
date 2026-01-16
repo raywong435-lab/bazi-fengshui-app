@@ -1,3 +1,8 @@
+/**
+ * @deprecated Use /users/{userId}/entitlements/monthly instead.
+ * This module is kept for backward compatibility but should not be used in new code.
+ * See generateReport.ts for the canonical quota implementation.
+ */
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 

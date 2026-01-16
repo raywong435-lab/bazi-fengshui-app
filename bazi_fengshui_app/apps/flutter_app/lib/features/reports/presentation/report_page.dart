@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
-import '../../application/report_provider.dart';
+import '../application/report_provider.dart';
 import '../../../shared/models/report_response.dart';
 
 class ReportPage extends ConsumerWidget {
@@ -52,11 +52,11 @@ class CareerReportView extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       child: ListView(
         children: [
-          Text(data.title, style: Theme.of(context).textTheme.headline6),
+          Text(data.title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text(data.summary['overall_potential'] ?? '', style: Theme.of(context).textTheme.bodyText2),
+          Text(data.summary['overall_potential'] ?? '', style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
-          Text('Career Path Suggestions', style: Theme.of(context).textTheme.subtitle1),
+          Text('Career Path Suggestions', style: Theme.of(context).textTheme.titleMedium),
           ...data.careerPathSuggestions.map((p) => ListTile(
                 title: Text(p['path_name'] ?? ''),
                 subtitle: Text(p['reason'] ?? ''),
@@ -79,11 +79,11 @@ class WealthReportView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(data.title, style: Theme.of(context).textTheme.headline6),
+          Text(data.title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          Text('5-Year Projection: ${data.fiveYearProjection}', style: Theme.of(context).textTheme.bodyText2),
+          Text('5-Year Projection: ${data.fiveYearProjection}', style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
-          Text('Investment Suggestions', style: Theme.of(context).textTheme.subtitle1),
+          Text('Investment Suggestions', style: Theme.of(context).textTheme.titleMedium),
           ...data.investmentSuggestions.map((s) => ListTile(title: Text(s))),
         ],
       ),
@@ -102,7 +102,7 @@ class HealthReportView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(data.title, style: Theme.of(context).textTheme.headline6),
+          Text(data.title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(data.healthSummary),
         ],
@@ -122,7 +122,7 @@ class RelationshipReportView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(data.title, style: Theme.of(context).textTheme.headline6),
+          Text(data.title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(data.relationshipAdvice),
         ],

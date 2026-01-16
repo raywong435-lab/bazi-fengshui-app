@@ -1039,7 +1039,8 @@ class __$$ReportMetadataImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
+@JsonSerializable(fieldRename: FieldRename.none)
 class _$ReportMetadataImpl implements _ReportMetadata {
   const _$ReportMetadataImpl(
       {required this.source,
@@ -1258,7 +1259,8 @@ class __$$FunctionResponseImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
+@JsonSerializable(fieldRename: FieldRename.none)
 class _$FunctionResponseImpl implements _FunctionResponse {
   const _$FunctionResponseImpl(
       {@ReportDataJsonConverter() required this.report,
