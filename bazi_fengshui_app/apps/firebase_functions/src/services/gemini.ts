@@ -1,26 +1,39 @@
-import * as functions from 'firebase-functions';
+import * as functions from 'firebase-functions/v1';
+import { defineString } from 'firebase-functions/params';
 import { GoogleGenerativeAI, GenerationConfig } from '@google/generative-ai';
 import { z } from 'zod';
 import { GeminiApiError, JsonParsingError, ValidationError } from '../types/errors';
 
 // Resolve API key in this priority order:
-// 1) functions config (`firebase functions:config:set gemini.key="..."`) — works with emulator
-// 2) environment variable `GEMINI_API_KEY`
-// 3) fall back to legacy `GENAI_KEY` env var
-const functionsConfigKey = (functions && (functions.config as any) && (functions.config() as any).gemini)?.key;
-const API_KEY = functionsConfigKey || process.env.GEMINI_API_KEY || process.env.GENAI_KEY || '';
-if (!API_KEY) {
-  console.warn('Warning: Gemini API key not found in functions config or GEMINI_API_KEY/GENAI_KEY env vars.');
+// 1) Environment parameter (runtime): `GEMINI_API_KEY` from Firebase Secrets
+// 2) Environment variable `GEMINI_API_KEY`
+// 3) Legacy env var `GENAI_KEY`
+// NOTE: We do NOT call .value() at module load time (deploy-time) to avoid
+// triggering params evaluation during deployment. Instead, resolve lazily at runtime.
+const GEMINI_KEY_PARAM = defineString('GEMINI_API_KEY');
+
+function getApiKey(): string {
+  // Resolve in priority order: param -> env var -> legacy env var
+  const apiKeyFromParam = GEMINI_KEY_PARAM.value();
+  const API_KEY = apiKeyFromParam || process.env.GEMINI_API_KEY || process.env.GENAI_KEY || '';
+  if (!API_KEY) {
+    console.warn('Warning: Gemini API key not found in Firebase Secrets, GEMINI_API_KEY, or GENAI_KEY env vars.');
+  }
+  return API_KEY;
 }
 
-const genAI = new GoogleGenerativeAI(API_KEY);
-const generativeModel = genAI.getGenerativeModel({ model: 'gemini-pro' });
+function getGenerativeModel() {
+  const API_KEY = getApiKey();
+  const genAI = new GoogleGenerativeAI(API_KEY);
+  return genAI.getGenerativeModel({ model: 'gemini-pro' });
+}
 
 export async function generateAndValidateJson<T extends z.ZodTypeAny>(
   prompt: string,
   schema: T
 ): Promise<z.infer<T>> {
   const generationConfig: GenerationConfig = {};
+  const generativeModel = getGenerativeModel();
 
   try {
     const result = await generativeModel.generateContent({
@@ -62,37 +75,6 @@ export async function generateAndValidateJson<T extends z.ZodTypeAny>(
  * Note: We use array.join() instead of template literals with triple-backticks
  * to avoid TypeScript compiler issues with code fence markers in strings.
  */
-export function buildBaziReportPrompt(
-  birthData: { year: number; month: number; day: number; hour: number },
-  chartData: Record<string, any>
-): string {
-  const schemaDescription = 'JSON object with: analysis (string), insights (array of strings), recommendations (array of strings)';
-
-  const lines = [
-    '你是一個專業的八字命理分析師。',
-    '',
-    '根據以下出生數據和八字圖表，生成詳細的命理報告。',
-    '',
-    '出生數據:',
-    `年: ${birthData.year}, 月: ${birthData.month}, 日: ${birthData.day}, 時: ${birthData.hour}`,
-    '',
-    '八字圖表:',
-    JSON.stringify(chartData, null, 2),
-    '',
-    '請以下列JSON格式返回分析結果:',
-    '```json',
-    '{',
-    '  "analysis": "string",',
-    '  "insights": ["string"],',
-    '  "recommendations": ["string"]',
-    '}',
-    '```',
-    '',
-    '確保返回的JSON可以被正確解析。',
-  ];
-
-  return lines.join('\n');
-}
 // Use a small, manually authored simplified JSON schema for guiding the model when zod->json-schema
 // conversion is too deep/complex. Final validation is still done with the Zod schema.
 export function createPrompt(
@@ -154,3 +136,31 @@ export async function generateReportWithGemini(chartData: Record<string, any>, r
   const validated = await generateAndValidateJson(prompt + '\n\n' + JSON.stringify(simplifiedForPrompt), ReportDataSchema as z.ZodTypeAny);
   return validated;
 }
+
+/**
+ * Simple wrapper for Gemini content generation.
+ * Called by generateReportWithGemini and other functions.
+ */
+export const generateContent = async (prompt: string) => {
+  const model = getGenerativeModel();
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: prompt }] }]
+  } as any);
+  const response = result.response;
+  return response.text();
+};
+
+/**
+ * Generate full structured report from Bazi data.
+ * Returns parsed JSON response.
+ */
+export const generateFullReport = async (baziData: any): Promise<any> => {
+  const prompt = `基于以下八字命盘数据，生成一份结构化的完整报告（JSON only）。八字数据: ${JSON.stringify(baziData)}`;
+  const text = await generateContent(prompt);
+  try {
+    const parsed = JSON.parse(text);
+    return parsed;
+  } catch (error) {
+    throw new Error('Failed to parse Gemini response as JSON');
+  }
+};

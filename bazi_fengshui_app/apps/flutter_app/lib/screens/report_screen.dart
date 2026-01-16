@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/report_provider.dart';
 
 class ReportScreen extends ConsumerStatefulWidget {
-  const ReportScreen({super.key});
+  final String? chartId;
+  
+  const ReportScreen({super.key, this.chartId});
 
   @override
   ConsumerState<ReportScreen> createState() => _ReportScreenState();

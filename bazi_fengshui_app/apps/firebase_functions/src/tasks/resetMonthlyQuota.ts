@@ -1,19 +1,23 @@
-import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
-
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
+import * as functions from 'firebase-functions/v1';
+import { getDb, admin } from '../config/firebase';
 
 const DEFAULT_MONTHLY_QUOTA = 10;
 
+/**
+ * Scheduled Cloud Function: resets all user monthly report quotas on the 1st of each month.
+ * Runs at 00:00 Asia/Taipei time (cron: '0 0 1 * *').
+ *
+ * @async
+ * @returns {Promise<null>} Completes after batch updating all users
+ * @throws {Error} If batch write fails
+ */
 export const resetMonthlyQuota = functions
   .region('asia-east1')
   .pubsub.schedule('0 0 1 * *')
   .timeZone('Asia/Taipei')
   .onRun(async () => {
     functions.logger.info('開始執行每月配額重設排程...');
+    const db = getDb();
 
     const usersRef = db.collection('users');
     const snapshot = await usersRef.get();

@@ -1,19 +1,24 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resetMonthlyQuota = void 0;
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
-const db = admin.firestore();
+const functions = require("firebase-functions/v1");
+const firebase_1 = require("../config/firebase");
 const DEFAULT_MONTHLY_QUOTA = 10;
+/**
+ * Scheduled Cloud Function: resets all user monthly report quotas on the 1st of each month.
+ * Runs at 00:00 Asia/Taipei time (cron: '0 0 1 * *').
+ *
+ * @async
+ * @returns {Promise<null>} Completes after batch updating all users
+ * @throws {Error} If batch write fails
+ */
 exports.resetMonthlyQuota = functions
     .region('asia-east1')
     .pubsub.schedule('0 0 1 * *')
     .timeZone('Asia/Taipei')
     .onRun(async () => {
     functions.logger.info('開始執行每月配額重設排程...');
+    const db = (0, firebase_1.getDb)();
     const usersRef = db.collection('users');
     const snapshot = await usersRef.get();
     if (snapshot.empty) {
@@ -28,7 +33,7 @@ exports.resetMonthlyQuota = functions
         const userRef = doc.ref;
         const updateData = {
             monthlyReportCount: DEFAULT_MONTHLY_QUOTA,
-            lastResetDate: admin.firestore.FieldValue.serverTimestamp(),
+            lastResetDate: firebase_1.admin.firestore.FieldValue.serverTimestamp(),
         };
         batch.update(userRef, updateData);
         writeCount++;

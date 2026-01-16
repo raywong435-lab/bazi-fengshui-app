@@ -3,6 +3,7 @@
 // Keep this file clean: only export functions, do not define them here.
 
 export { createChart } from './callable/createChart';
+export { generateReport } from './callable/generateReport';
 export { resetMonthlyQuota } from './tasks/resetMonthlyQuota';
 
 // NOTE: Implementations live in src/callable/* and src/tasks/*

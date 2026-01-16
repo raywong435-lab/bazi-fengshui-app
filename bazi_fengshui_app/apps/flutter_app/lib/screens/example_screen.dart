@@ -34,7 +34,7 @@ class _BaziExampleScreenState extends State<BaziExampleScreen> {
 
       // Step 2: Create chart
       _addOutput('\n步驟 2: 建立八字命盤...');
-      final chartRequest = ChartRequest(
+      const chartRequest = ChartRequest(
         chartName: 'Ray 測試',
         birthDate: '2000-01-15T14:30:00+08:00',
         gender: 1, // 1 = male, 2 = female

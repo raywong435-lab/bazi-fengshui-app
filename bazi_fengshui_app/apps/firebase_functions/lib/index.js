@@ -3,9 +3,11 @@
 // All function implementations are isolated in their respective modules.
 // Keep this file clean: only export functions, do not define them here.
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resetMonthlyQuota = exports.createChart = void 0;
+exports.resetMonthlyQuota = exports.generateReport = exports.createChart = void 0;
 var createChart_1 = require("./callable/createChart");
 Object.defineProperty(exports, "createChart", { enumerable: true, get: function () { return createChart_1.createChart; } });
+var generateReport_1 = require("./callable/generateReport");
+Object.defineProperty(exports, "generateReport", { enumerable: true, get: function () { return generateReport_1.generateReport; } });
 var resetMonthlyQuota_1 = require("./tasks/resetMonthlyQuota");
 Object.defineProperty(exports, "resetMonthlyQuota", { enumerable: true, get: function () { return resetMonthlyQuota_1.resetMonthlyQuota; } });
 // NOTE: Implementations live in src/callable/* and src/tasks/*

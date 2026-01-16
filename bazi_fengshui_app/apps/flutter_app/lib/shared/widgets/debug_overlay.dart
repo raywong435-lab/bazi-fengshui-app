@@ -69,7 +69,7 @@ class _FloatingDebugPanelFromMetadataState extends State<_FloatingDebugPanelFrom
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(8),
-          boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 6)],
+          boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 6)],
         ),
         child: collapsed
             ? const Icon(Icons.bug_report, color: Colors.white)

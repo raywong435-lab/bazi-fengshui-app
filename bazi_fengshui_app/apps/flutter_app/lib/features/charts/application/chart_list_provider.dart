@@ -1,8 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-// Import your Chart model and repository — adjust the paths to match your project structure
-// import 'package:app/features/charts/domain/chart.dart';
-// import 'package:app/features/charts/data/charts_repository.dart';
+import '../data/charts_repository.dart';
+import '../data/models/chart_model.dart';
 
 part 'chart_list_provider.g.dart';
 

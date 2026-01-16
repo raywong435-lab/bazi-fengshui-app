@@ -1,5 +1,5 @@
 
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
 import { Solar } from "lunar-typescript";
 import { z } from "zod";
 
@@ -30,6 +30,14 @@ interface ChartData {
   // Add more fields as needed, like bigLuck, etc.
 }
 
+/**
+ * Core Bazi calculation logic using lunar-typescript library.
+ * Converts birth date/time to Bazi four pillars (year, month, day, hour).
+ *
+ * @param {CreateChartData} data - Birth data with year, month, day, hour, minute, gender
+ * @returns {Promise<ChartData>} Bazi chart with four pillars (heavenlyStem and earthlyBranch for each)
+ * @throws {Error} If required birth data is missing or calculation fails
+ */
 const createChartLogic = async (data: CreateChartData): Promise<ChartData> => {
   // Validate input
   if (!data.year && data.year !== 0) throw new Error('必须提供出生年。');
@@ -80,8 +88,25 @@ const createChartLogic = async (data: CreateChartData): Promise<ChartData> => {
 };
 
 
+/**
+ * Creates a Bazi chart from birth date/time data.
+ *
+ * @param {object} data - Input data
+ * @param {string} data.chartName - Name for the chart
+ * @param {string} data.birthDate - ISO 8601 datetime string (e.g., "2000-01-15T14:30:00+08:00")
+ * @param {1|2} data.gender - 1 for male, 2 for female
+ * @param {string} [data.timeZone] - Optional timezone (default system)
+ * @returns {Promise<ChartData>} Object with year, month, day, hour pillars (each has heavenlyStem, earthlyBranch)
+ * @throws {HttpsError} 'unauthenticated' if user not logged in
+ * @throws {HttpsError} 'invalid-argument' if input fails schema validation
+ */
 // Main callable function: accepts user-friendly input, validates, and maps to calculation logic
 export const createChart = functions.region("asia-east1").https.onCall(async (data, context) => {
+  // Require authentication for secure write
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated to create a chart.');
+  }
+
   // Validate input against the updated schema
   const parseResult = chartInputSchema.safeParse(data);
   if (!parseResult.success) {

@@ -49,7 +49,7 @@ class CreateChartPage extends ConsumerWidget {
 
                     // 性別
                     DropdownButtonFormField<String>(
-                      value: formData.gender,
+                      initialValue: formData.gender,
                       items: const [
                         DropdownMenuItem(value: 'male', child: Text('男')),
                         DropdownMenuItem(value: 'female', child: Text('女')),
