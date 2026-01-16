@@ -1,0 +1,54 @@
+name: bazi_fengshui_app
+
+packages:
+  - apps/**            # Flutter app and other apps
+  - packages/**        # Shared packages including shared_types
+
+scripts:
+  # === BOOTSTRAP ===
+  # 安装所有 Dart/Flutter 和 Node.js 依赖
+  bootstrap:
+    run: |
+      melos exec --scope="bazi_fengshui_app" -- flutter pub get
+      melos exec --scope="shared_types" -- flutter pub get
+      melos exec --scope="core" -- flutter pub get
+      melos exec --scope="firebase_functions" -- npm install
+    description: Install dependencies for all packages.
+
+  # === CLEAN ===
+  clean:
+    run: |
+      melos exec --scope="bazi_fengshui_app" -- flutter clean
+      melos exec --scope="shared_types" -- flutter clean
+      melos exec --scope="core" -- flutter clean
+      melos exec --scope="firebase_functions" -- "rm -rf node_modules && rm -rf lib"
+    description: Clean all packages.
+
+  # === CODE GENERATION ===
+  generate:
+    run: |
+      melos exec --scope="bazi_fengshui_app" -- flutter pub run build_runner build --delete-conflicting-outputs
+      melos exec --scope="shared_types" -- flutter pub run build_runner build --delete-conflicting-outputs
+    description: Run code generation for Flutter packages.
+
+  # === TESTING ===
+  test:
+    run: melos run test:app && melos run test:functions
+    description: Run all tests for app and functions.
+
+  test:app:
+    run: melos exec --scope="bazi_fengshui_app" -- flutter test
+    description: Run tests for the Flutter app.
+
+  test:functions:
+    run: melos exec --scope="firebase_functions" -- npm run test
+    description: Run unit tests for Firebase Functions.
+
+  # === DEPLOYMENT ===
+  deploy:functions:
+    run: melos exec --scope="firebase_functions" -- firebase deploy --only functions
+    description: Deploy Firebase Functions.
+
+command:
+  bootstrap:
+    usePubspecOverrides: true

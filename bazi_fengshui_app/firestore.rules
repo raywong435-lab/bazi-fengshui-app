@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 用户只能读取自己的个人资料
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+      // 创建、更新、删除应通过后端完成
+      allow write: if false;
+    }
+
+    // 用户只能读取自己的报告，所有写入操作必须通过云函数完成
+    // 路径示例: /users/{userId}/reports/{reportId}
+    match /users/{userId}/reports/{reportId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // 关键安全点：禁止客户端直接写入报告
+    }
+    
+    // 用户只能读取自己的权益状态（如配额），所有写入操作必须通过云函数完成
+    // 路径示例: /users/{userId}/entitlements/monthly
+    match /users/{userId}/entitlements/{docId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false; // 关键安全点：禁止客户端修改配额
+    }
+  }
+}

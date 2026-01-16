@@ -1,0 +1,13 @@
+name: shared_logic
+version: 0.0.1
+description: Shared Dart utilities for AIBaZi monorepo.
+publish_to: none
+
+environment:
+  sdk: ">=2.17.0 <4.0.0"
+
+dependencies:
+  collection: ^1.16.0
+
+dev_dependencies:
+  test: ^1.21.0
