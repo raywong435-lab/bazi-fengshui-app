@@ -1,15 +1,38 @@
-# Quick Reference Card
+# Quick Reference Card (快速參考卡)
 
-## 🎯 Most Common Commands
+> **最後更新：2026年1月17日**  
+> **專案版本：v1.0.0-dev**
 
-### Start Development
+## 🎯 最常用指令 (Most Common Commands)
+
+### 啟動開發環境 (Start Development)
+
+**Windows PowerShell:**
+```powershell
+# 終端 1: Firebase Emulator
+cd bazi_fengshui_app\apps\firebase_functions
+npm run build
+cd ..\..\..
+firebase emulators:start --only auth,firestore,functions
+
+# 終端 2: Flutter App（自動連接 emulator）
+cd bazi_fengshui_app\apps\flutter_app
+flutter run
+
+# 終端 3: 測試 Functions（可選）
+cd bazi_fengshui_app\apps\firebase_functions
+npm run shell
+```
+
+**macOS/Linux Bash:**
 ```bash
 # Terminal 1: Firebase Emulator
 cd bazi_fengshui_app/apps/firebase_functions
 npm run build
-firebase emulators:start --only auth,firestore,functions --debug
+cd ../../..
+firebase emulators:start --only auth,firestore,functions
 
-# Terminal 2: Flutter App (auto-connects to emulator)
+# Terminal 2: Flutter App
 cd bazi_fengshui_app/apps/flutter_app
 flutter run
 

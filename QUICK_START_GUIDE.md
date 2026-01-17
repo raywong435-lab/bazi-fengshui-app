@@ -1,4 +1,7 @@
-# 快速啟動指南
+# 快速啟動指南 (Quick Start Guide)
+
+> **最後更新：2026年1月17日**  
+> **適用於：Windows / macOS / Linux**
 
 ## 🚀 一鍵啟動測試環境
 
@@ -8,16 +11,28 @@
 
 **終端 1 - Firebase Emulator:**
 ```powershell
+# Windows PowerShell
 cd bazi_fengshui_app\apps\firebase_functions
 npm run build
 cd ..\..\..
 firebase emulators:start --only auth,firestore,functions
+
+# macOS/Linux Bash
+# cd bazi_fengshui_app/apps/firebase_functions
+# npm run build
+# cd ../../..
+# firebase emulators:start --only auth,firestore,functions
 ```
 
 **終端 2 - Flutter 應用:**
 ```powershell
+# Windows
 cd bazi_fengshui_app\apps\flutter_app
 flutter run
+
+# macOS/Linux
+# cd bazi_fengshui_app/apps/flutter_app
+# flutter run
 ```
 
 ---
